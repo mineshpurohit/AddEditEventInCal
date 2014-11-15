@@ -165,6 +165,8 @@
 	}
 }
 
+#pragma mark Delete Event In Calender
+
 -(void)deleteEventInCalender:(id)infoObject
 {
     EKEventStore *eventDB = [[EKEventStore alloc] init];
