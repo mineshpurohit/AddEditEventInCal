@@ -12,5 +12,6 @@
 
 -(void)addEventInCalender:(id)infoObject;
 -(void)updateEventInCalender:(id)infoObject;
+-(void)deleteEventInCalender:(id)infoObject;
 
 @end
