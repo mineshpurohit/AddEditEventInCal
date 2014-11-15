@@ -76,8 +76,7 @@
 #pragma mark Update Event In Calender
 
 -(void)updateEventInCalender:(id)infoObject {
-    
-	EKEventStore *eventDB = [[EKEventStore alloc] init];
+    EKEventStore *eventDB = [[EKEventStore alloc] init];
     if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6.0")) {
         [eventDB requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error) {
             if (granted) {
@@ -139,6 +138,15 @@
 //		myEvent.location = @"";
 		myEvent.notes = @"Remember Me!";
         
+        	EKAlarm * alarm = [EKAlarm alarmWithAbsoluteDate:[self getDateFromString:[NSString stringWithFormat:@"%@ 00:01",[tempObject valueForKey:@"strStartDate"]]]];
+		NSArray *alarmTime = [@"00:01" componentsSeparatedByString:@":"];
+		if ([alarmTime count] > 1) {
+		      alarm.relativeOffset = -(([[alarmTime objectAtIndex:0] intValue]*60*60)+([[alarmTime objectAtIndex:1] intValue]*60));
+		} else {
+		      alarm.relativeOffset = -(5*60);
+		}
+    		[event addAlarm:alarm];
+        
 		[myEvent setCalendar:[eventDB defaultCalendarForNewEvents]];
         
 		NSError *err;
@@ -146,15 +154,48 @@
         
 		if (err == noErr) {
 			NSLog(@"Add Success");
-            NSUserDefaults * perfs = [NSUserDefaults standardUserDefaults];
-            NSString * taskKey = [NSString stringWithFormat:@"task%@",[tempObject valueForKey:@"strCreatedTimeStamp"]];
-            [perfs setObject:myEvent.eventIdentifier forKey:taskKey];
-            [perfs synchronize];
+        		 NSUserDefaults * perfs = [NSUserDefaults standardUserDefaults];
+        		 NSString * taskKey = [NSString stringWithFormat:@"task%@",[tempObject valueForKey:@"strCreatedTimeStamp"]];
+            		[perfs setObject:myEvent.eventIdentifier forKey:taskKey];
+            		[perfs synchronize];
 		} else {
 			NSLog(@"Add Failed");
 		}
         
 	}
+}
+
+-(void)deleteEventInCalender:(id)infoObject
+{
+    EKEventStore *eventDB = [[EKEventStore alloc] init];
+    if(SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6.0")) {
+        [eventDB requestAccessToEntityType:EKEntityTypeEvent completion:^(BOOL granted, NSError *error) {
+            if (granted) {
+                [self deleteEventWithEKTaskStore:eventDB withTask:infoObject];
+            }
+        }];
+    } else {
+        [self deleteEventWithEKTaskStore:eventDB withTask:infoObject];
+    }
+}
+
+- (void) deleteTaskWithEKTaskStore:(EKEventStore *) eventDB withTask:(Task *) tempObject {
+    
+    NSUserDefaults * perfs = [NSUserDefaults standardUserDefaults];
+    
+    NSString * taskKey = [NSString stringWithFormat:@"task%@",[self.objTask strCreatedTimeStamp]];
+    EKEvent * event = [eventDB eventWithIdentifier:[perfs valueForKey:taskKey]];
+    
+    NSError * error = nil;
+    if (event != nil) {
+        [eventDB removeEvent:event span:EKSpanThisEvent error:&error];
+    }
+    
+    if (error == noErr) {
+        NSLog(@"Delete Success");
+    }else {
+        NSLog(@"Delete Failed");
+    }
 }
 
 #pragma mark - Date Methods
